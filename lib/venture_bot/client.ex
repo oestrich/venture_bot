@@ -35,7 +35,7 @@ defmodule VentureBot.Client do
   end
 
   defmodule Bot do
-    @exits_regex ~r/Exits: (?<exits>[\w, ]+)\n/
+    @exits_regex ~r/Exits: (?<exits>[\w\(\), ]+)\n/
 
     def process(state = %{active: false}, string) do
       IO.puts(string)
@@ -70,6 +70,8 @@ defmodule VentureBot.Client do
           exit =
             exits
             |> String.split(",")
+            |> Enum.map(&String.replace(&1, "(closed)", ""))
+            |> Enum.map(&String.replace(&1, "(open)", ""))
             |> Enum.map(&String.trim/1)
             |> Enum.shuffle()
             |> List.first()

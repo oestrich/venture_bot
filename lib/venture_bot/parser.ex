@@ -19,7 +19,9 @@ defmodule VentureBot.Parser do
   end
 
   defp strip_color(string) do
-    String.replace(string, ~r/\e\[\d+m/, "")
+    string
+    |> String.replace(~r/\e\[\d+m/, "")
+    |> String.replace(~r/\e\[\d+;\d+;\d+m/, "")
   end
 
   defp remove_iac(<<>>, acc), do: acc
