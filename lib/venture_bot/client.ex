@@ -16,7 +16,7 @@ defmodule VentureBot.Client do
 
   def init(_) do
     Logger.info("Starting bot")
-    {:ok, %{active: false}, {:continue, :connect}}
+    {:ok, %{active: false, name: nil}, {:continue, :connect}}
   end
 
   def handle_continue(:connect, state) do
@@ -33,7 +33,7 @@ defmodule VentureBot.Client do
   end
 
   def handle_info({:send, string}, state) do
-    Logger.info("Sending: " <> string)
+    Logger.info("[#{state.name}] Sending: " <> string)
     :gen_tcp.send(state.socket, string <> "\n")
     {:noreply, state}
   end
@@ -59,8 +59,9 @@ defmodule VentureBot.Client do
 
         create_name_prompt?(string) ->
           Logger.info("Picking a name")
-          Client.push(self(), random_name())
-          {:ok, state}
+          name = random_name()
+          Client.push(self(), name)
+          {:ok, %{state | name: name}}
 
         create_races_prompt?(string) ->
           Logger.info("Picking a race")
@@ -103,18 +104,28 @@ defmodule VentureBot.Client do
 
       case exits?(string) do
         true ->
-          Logger.info("Found exits")
-          [_, exits] = Regex.run(@exits_regex, string)
-          exit =
-            exits
-            |> String.split(",")
-            |> Enum.map(&String.replace(&1, "(closed)", ""))
-            |> Enum.map(&String.replace(&1, "(open)", ""))
-            |> Enum.map(&String.trim/1)
-            |> Enum.shuffle()
-            |> List.first()
+          Logger.debug("Found exits")
 
-          Process.send_after(self(), {:send, exit}, 1500)
+          captures = Regex.named_captures(@exits_regex, string)
+
+          case captures do
+            %{"exits" => exits} ->
+              exit =
+                exits
+                |> String.split(",")
+                |> Enum.map(&String.replace(&1, "(closed)", ""))
+                |> Enum.map(&String.replace(&1, "(open)", ""))
+                |> Enum.map(&String.trim/1)
+                |> Enum.shuffle()
+                |> List.first()
+
+              delay = Enum.random(3_500..7_000)
+              Process.send_after(self(), {:send, exit}, delay)
+
+            _ ->
+              delay = Enum.random(3_500..7_000)
+              Process.send_after(self(), {:send, "look"}, delay)
+          end
 
           {:ok, state}
 
@@ -152,17 +163,13 @@ defmodule VentureBot.Client do
     end
 
     defp exits?(string) do
-      Regex.match?(@exits_regex, string)
+      Regex.match?(~r/Exits:/, string)
     end
 
     defp random_name() do
       UUID.uuid4()
       |> String.slice(0..11)
       |> String.replace("-", "")
-    end
-
-    defp random_password() do
-      UUID.uuid4()
     end
   end
 end

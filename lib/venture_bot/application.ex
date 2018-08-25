@@ -5,10 +5,11 @@ defmodule VentureBot.Application do
 
   def start(_type, _args) do
     children = [
-      {VentureBot.Client, []}
+      {VentureBot.Supervisor, []},
+      {VentureBot.Monitor, []}
     ]
 
-    opts = [strategy: :one_for_one, name: VentureBot.Supervisor]
+    opts = [strategy: :one_for_one, name: VentureBot.AppSupervisor]
     Supervisor.start_link(children, opts)
   end
 end
