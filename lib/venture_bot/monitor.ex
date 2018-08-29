@@ -8,7 +8,7 @@ defmodule VentureBot.Monitor do
   end
 
   def kick_off(count \\ 100) do
-    GenServer.call(__MODULE__, {:kick_off, count})
+    GenServer.cast(__MODULE__, {:kick_off, count})
   end
 
   def init(_) do
