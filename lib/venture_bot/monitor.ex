@@ -14,7 +14,7 @@ defmodule VentureBot.Monitor do
   def init(_) do
     Logger.info("Starting the monitor")
     Process.send_after(self(), {:kick_off, 100}, 1_000)
-    {:ok, %{}}
+    {:ok, %{counter: 0}}
   end
 
   def handle_cast({:kick_off, count}, state) do
@@ -25,14 +25,14 @@ defmodule VentureBot.Monitor do
     Logger.info("Kicking off clients")
 
     Enum.each(1..count, fn i ->
-      Process.send_after(self(), :start_child, i * 1000)
+      Process.send_after(self(), :start_child, i * 1)
     end)
 
     {:noreply, state}
   end
 
   def handle_info(:start_child, state) do
-    VentureBot.Supervisor.start_child()
-    {:noreply, state}
+    VentureBot.Supervisor.start_child(state.counter)
+    {:noreply, %{state | counter: state.counter + 1}}
   end
 end

@@ -5,8 +5,8 @@ defmodule VentureBot.Supervisor do
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def start_child() do
-    DynamicSupervisor.start_child(__MODULE__, {VentureBot.Client, []})
+  def start_child(counter) do
+    DynamicSupervisor.start_child(__MODULE__, {VentureBot.Client, [counter]})
   end
 
   def init(_) do
